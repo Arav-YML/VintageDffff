@@ -1,4 +1,13 @@
 rootProject.name = 'VintagePDFGenerator'
 
+pluginManagement {
+  includeBuild("../node_modules/react-native")
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url("$rootDir/../node_modules/react-native/android") }
+  }
+}
+
 include ':app'
-includeBuild("../node_modules/react-native")
