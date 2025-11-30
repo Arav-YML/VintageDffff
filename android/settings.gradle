@@ -1,7 +1,6 @@
 rootProject.name = 'VintagePDFGenerator'
 
 // Use the new gradle plugin path
-apply from: file("../node_modules/react-native-gradle-plugin/native_modules.gradle"); applyNativeModulesSettingsGradle(this)
 
 include ':app'
 includeBuild('../node_modules/react-native/gradle-plugin')
