@@ -3,4 +3,4 @@ rootProject.name = 'VintagePDFGenerator'
 // Use the new gradle plugin path
 
 include ':app'
-includeBuild("../node_modules/react-native")
+includeBuild("../node_modules/react-native/react-native-gradle-plugin")
