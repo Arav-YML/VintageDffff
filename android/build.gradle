@@ -20,6 +20,7 @@ buildscript {
 
         // Kotlin Gradle plugin
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.facebook.react:react-native-gradle-plugin:0.79.5")
     }
 }
 
