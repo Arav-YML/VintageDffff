@@ -1,0 +1,95 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'yarn'
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
+    - name: Cache Gradle Wrapper
+      uses: actions/cache@v4
+      with:
+        path: ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
+
+    - name: Cache Gradle Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-caches-${{ hashFiles('android/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-caches-
+
+    - name: Make Gradlew Executable
+      run: cd android && chmod +x ./gradlew
+
+    - name: Generate debug keystore
+      run: |
+        cd android/app
+        if [ ! -f debug.keystore ]; then
+          keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+        fi
+
+    - name: Link react-native-vector-icons fonts
+      run: |
+        mkdir -p android/app/src/main/assets/fonts
+        cp node_modules/react-native-vector-icons/Fonts/*.ttf android/app/src/main/assets/fonts/ || true
+
+    - name: Build Debug APK
+      run: |
+        cd android
+        ./gradlew assembleDebug --no-daemon --stacktrace
+
+    - name: Build Release APK
+      run: |
+        cd android
+        ./gradlew assembleRelease --no-daemon --stacktrace
+
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: vintage-pdf-debug-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: vintage-pdf-release-apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+        retention-days: 90
+
+    - name: Get APK Info
+      if: success()
+      run: |
+        echo "✅ Build successful!"
+        echo "📦 Debug APK size: $(du -h android/app/build/outputs/apk/debug/app-debug.apk | cut -f1)"
+        echo "📦 Release APK size: $(du -h android/app/build/outputs/apk/release/app-release.apk | cut -f1)"
